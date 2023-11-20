@@ -1,0 +1,36 @@
+{
+  "name": "typescript-library-template",
+  "version": "0.0.0",
+  "description": "Template for creating TypeScript libraries",
+  "license": "MIT",
+  "author": "Adam Jones (domdomegg)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/domdomegg/typescript-library-template.git"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx .",
+    "clean": "rm -rf dist",
+    "build": "tsc --project tsconfig.build.json",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "@tsconfig/node-lts-strictest": "^18.12.1",
+    "eslint": "^8.36.0",
+    "eslint-config-domdomegg": "^1.2.1",
+    "typescript": "^4.9.5",
+    "vitest": "^0.29.2"
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint-config-domdomegg"
+    ]
+  }
+}
