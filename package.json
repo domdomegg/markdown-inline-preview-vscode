@@ -1,18 +1,27 @@
 {
-  "name": "typescript-library-template",
+  "name": "markdown-inline-preview-vscode",
   "version": "0.0.0",
-  "description": "Template for creating TypeScript libraries",
+  "description": "A VS Code extension for improving the display of markdown directly in the editor",
   "license": "MIT",
   "author": "Adam Jones (domdomegg)",
+  "private": "true",
   "repository": {
     "type": "git",
-    "url": "https://github.com/domdomegg/typescript-library-template.git"
+    "url": "https://github.com/domdomegg/markdown-inline-preview-vscode.git"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Themes",
+    "Other"
   ],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {},
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest --watch",
@@ -22,10 +31,16 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "devDependencies": {
-    "@tsconfig/node-lts-strictest": "^18.12.1",
+    "@tsconfig/node-lts": "^18.12.5",
+    "@tsconfig/strictest": "^2.0.2",
+    "@types/mocha": "^10.0.4",
+    "@types/vscode": "^1.84.1",
+    "@vscode/test-electron": "^2.3.6",
     "eslint": "^8.36.0",
     "eslint-config-domdomegg": "^1.2.1",
-    "typescript": "^4.9.5",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.2",
     "vitest": "^0.29.2"
   },
   "eslintConfig": {
