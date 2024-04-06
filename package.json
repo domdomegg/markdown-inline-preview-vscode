@@ -48,6 +48,10 @@
   "eslintConfig": {
     "extends": [
       "eslint-config-domdomegg"
-    ]
+    ],
+    "rules": {
+      "no-cond-assign": "off",
+      "no-continue": "off"
+    }
   }
 }

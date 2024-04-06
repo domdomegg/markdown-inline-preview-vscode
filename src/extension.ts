@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { Decorator } from "./decorator"
+import { Decorator } from './decorator';
 
 export function activate(context: vscode.ExtensionContext) {
-  const decorator = new Decorator()
+  const decorator = new Decorator();
   decorator.setActiveEditor(vscode.window.activeTextEditor);
 
   const changeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor(() => {

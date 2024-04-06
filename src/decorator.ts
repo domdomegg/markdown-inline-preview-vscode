@@ -1,8 +1,10 @@
 import { Range, TextEditor } from 'vscode';
-import { DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType } from './decorations';
+import {
+  DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType,
+} from './decorations';
 
-const boldRegex = /\*{2}((?=[^\s\*]).*?[^\s\*])\*{2}/g;
-const italicRegex = /(?<!\*)\*((?=[^\s\*]).*?[^\s\*])\*(?!\*)/g;
+const boldRegex = /\*{2}((?=[^\s*]).*?[^\s*])\*{2}/g;
+const italicRegex = /(?<!\*)\*((?=[^\s*]).*?[^\s*])\*(?!\*)/g;
 const hRegex = /^[ \t]*#{1,6}([ \t].*|$)/gm;
 const h1Regex = /^[ \t]*#{1}([ \t].*|$)/gm;
 const h2Regex = /^[ \t]*#{2}([ \t].*|$)/gm;
@@ -10,10 +12,15 @@ const h3Regex = /^[ \t]*#{3}([ \t].*|$)/gm;
 
 export class Decorator {
   activeEditor: TextEditor | undefined;
+
   hideDecorationType = HideDecorationType();
+
   defaultColorDecorationType = DefaultColorDecorationType();
+
   xxlTextDecorationType = XxlTextDecorationType();
+
   xlTextDecorationType = XlTextDecorationType();
+
   lTextDecorationType = LTextDecorationType();
 
   setActiveEditor(textEditor: TextEditor | undefined) {
@@ -35,15 +42,15 @@ export class Decorator {
     const documentText = this.activeEditor.document.getText();
 
     const hiddenRanges = [];
-    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, boldRegex, 2))
-    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, italicRegex, 1))
-    hiddenRanges.push(...this.getHeadingHidingRanges(documentText))
+    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, boldRegex, 2));
+    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, italicRegex, 1));
+    hiddenRanges.push(...this.getHeadingHidingRanges(documentText));
     this.activeEditor.setDecorations(this.hideDecorationType, hiddenRanges);
 
-    const defaultColorRanges = []
-    defaultColorRanges.push(...this.getRanges(documentText, boldRegex))
-    defaultColorRanges.push(...this.getRanges(documentText, italicRegex))
-    defaultColorRanges.push(...this.getRanges(documentText, hRegex))
+    const defaultColorRanges = [];
+    defaultColorRanges.push(...this.getRanges(documentText, boldRegex));
+    defaultColorRanges.push(...this.getRanges(documentText, italicRegex));
+    defaultColorRanges.push(...this.getRanges(documentText, hRegex));
     this.activeEditor.setDecorations(this.defaultColorDecorationType, defaultColorRanges);
 
     this.activeEditor.setDecorations(this.xxlTextDecorationType, this.getRanges(documentText, h1Regex));
@@ -61,9 +68,9 @@ export class Decorator {
 
   getTogglableSymmetricRanges(documentText: string, regex: RegExp, length: number): Range[] {
     if (!this.activeEditor) return [];
-    
+
     let match;
-    const ranges = []
+    const ranges = [];
     while ((match = regex.exec(documentText))) {
       const group = match[0];
 
@@ -72,7 +79,7 @@ export class Decorator {
       const closingStartPosition = this.activeEditor.document.positionAt(match.index + group.length - length);
       const closingEndPosition = this.activeEditor.document.positionAt(match.index + group.length);
       const fullRange = new Range(openingStartPosition, closingEndPosition);
-      if (this.isLineOfRangeSelected(fullRange)) { // or this.isRangeSelected(range)?
+      if (this.isLineOfRangeSelected(fullRange)) {
         continue;
       }
       ranges.push(
@@ -85,9 +92,9 @@ export class Decorator {
 
   getHeadingHidingRanges(documentText: string) {
     if (!this.activeEditor) return [];
-    
+
     let match;
-    const ranges = []
+    const ranges = [];
     while ((match = hRegex.exec(documentText))) {
       const group = match[0];
       const prefixLength = group.match(/^[ \t]*#{1,6}([ \t]|$)/)?.[0]?.length ?? 0;
@@ -111,9 +118,9 @@ export class Decorator {
 
   getRanges(documentText: string, regex: RegExp) {
     if (!this.activeEditor) return [];
-    
+
     let match;
-    const ranges = []
+    const ranges = [];
     while ((match = regex.exec(documentText))) {
       const group = match[0];
 
