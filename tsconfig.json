@@ -1,5 +1,5 @@
 {
-  "extends": ["@tsconfig/strictest/tsconfig", "@tsconfig/node-lts/tsconfig"],
+  "extends": ["@tsconfig/node-lts/tsconfig.json", "tsconfig-domdomegg/tsconfig.json"],
   "include": [
     "src/**/*.ts"
   ],

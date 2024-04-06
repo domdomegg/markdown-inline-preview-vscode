@@ -33,7 +33,7 @@ export class Decorator {
     }
 
     const documentText = this.activeEditor.document.getText();
-    
+
     const hiddenRanges = [];
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, boldRegex, 2))
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, italicRegex, 1))

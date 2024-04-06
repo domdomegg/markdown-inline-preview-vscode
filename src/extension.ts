@@ -16,7 +16,6 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(changeTextEditorSelection);
 }
 
-// This method is called when your extension is deactivated
 export function deactivate(context: vscode.ExtensionContext) {
   context.subscriptions.forEach((subscription) => subscription.dispose());
 }

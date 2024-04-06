@@ -2,20 +2,60 @@
 
 A VS Code extension for improving the display of markdown directly in the editor. This makes markdown editing more pleasant as you don't need to be switching between the editor and preview as much, and it hides a lot of clutter.
 
-TODO: screenshot
+![Demo video showing markdown-inline-preview-vscode](./demo.mp4)
 
 Tweaks made include:
 
 - Making headings larger
 - Hiding bold and italic formatting characters
 - Disabling coloring of bold text and headings
-- Making indented bullets look nicer
-  - TODO: see if we can change bullet style?
-- TODO: Hiding link details
 
 ## Usage
 
-TODO: usage instructions
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=domdomegg.markdown-inline-preview-vscode) or [Open VSX Registry](https://open-vsx.org/extension/domdomegg/markdown-inline-preview-vscode)
+
+<details>
+<summary>Recommended `.vscode/settings.json`</summary>
+
+```json
+{
+  "[markdown]": {
+    "editor.quickSuggestions": {
+      "other": false,
+      "comments": false,
+      "strings": false
+    },
+    "editor.fontFamily": "Fira Sans",
+    "editor.wrappingStrategy": "advanced",
+    "editor.fontSize": 13,
+    "editor.lineHeight": 1.5,
+    "editor.cursorBlinking": "phase",
+    "editor.lineNumbers": "off",
+    "editor.indentSize": "tabSize",
+    "editor.tabSize": 6,
+    "editor.insertSpaces": false,
+    "editor.autoClosingBrackets": "never",
+    "editor.bracketPairColorization.enabled": false,
+    "editor.matchBrackets": "never",
+    "editor.guides.indentation": false,
+    "editor.padding.top": 20
+  },
+  "editor.tokenColorCustomizations": {
+    "[Default Dark Modern]": {
+      "textMateRules": [
+        {
+          "scope": "punctuation.definition.list.begin.markdown",
+          "settings": {
+            "foreground": "#777",
+          }
+        },
+      ]
+    }
+  }
+}
+```
+
+</details>
 
 ## Contributing
 
@@ -24,8 +64,9 @@ Pull requests are welcomed on GitHub! To get started:
 1. Install Git and Node.js
 2. Clone the repository
 3. Install dependencies with `npm install`
-4. Run `npm run test` to run tests
-5. Build with `npm run build`
+4. Build with `npm run build`
+
+Run the extension locally with the 'Run and Debug' preset in VS Code.
 
 ## Releases
 
