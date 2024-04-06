@@ -2,7 +2,7 @@
 
 A VS Code extension for improving the display of markdown directly in the editor. This makes markdown editing more pleasant as you don't need to be switching between the editor and preview as much, and it hides a lot of clutter.
 
-![Demo video showing markdown-inline-preview-vscode](./demo.mp4)
+https://github.com/domdomegg/markdown-inline-preview-vscode/assets/4953590/112da46d-214b-4d2c-8f13-c269c8d040cd
 
 Tweaks made include:
 
