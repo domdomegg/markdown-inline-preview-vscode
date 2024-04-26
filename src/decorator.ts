@@ -7,6 +7,7 @@ const boldRegex = /(\*{2}|_{2})((?=[^\s*_]).*?[^\s*_])(\1)/g;
 const italicRegex = /(?<!\*|_)(\*|_)((?=[^\s*_]).*?[^\s*_])(\1)(?!\*|_)/g;
 const strikethroughRegex = /(?<!~)(~{2})((?=[^\s~]).*?[^\s~])(~{2})(?!~)/g;
 const inlineCodeRegex = /(`)((?=[^\s`]).*?[^\s`])(`)/g;
+const blockCodeRegex = /((`{3}|~{3})\w*\n)(.*\n)*?(\2\n)/g;
 const hRegex = /^[ \t]*#{1,6}([ \t].*|$)/gm;
 const h1Regex = /^[ \t]*#{1}([ \t].*|$)/gm;
 const h2Regex = /^[ \t]*#{2}([ \t].*|$)/gm;
@@ -44,10 +45,11 @@ export class Decorator {
     const documentText = this.activeEditor.document.getText();
 
     const hiddenRanges = [];
-    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, boldRegex, 2));
-    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, italicRegex, 1));
-    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, strikethroughRegex, 2));
-    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, inlineCodeRegex, 1));
+    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, boldRegex));
+    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, italicRegex));
+    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, strikethroughRegex));
+    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, inlineCodeRegex));
+    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, blockCodeRegex));
     hiddenRanges.push(...this.getHeadingHidingRanges(documentText));
     this.activeEditor.setDecorations(this.hideDecorationType, hiddenRanges);
 
@@ -70,7 +72,7 @@ export class Decorator {
     return !!(this.activeEditor?.selections.find((s) => !(range.end.line < s.start.line || range.start.line > s.end.line)));
   }
 
-  getTogglableSymmetricRanges(documentText: string, regex: RegExp, length: number): Range[] {
+  getTogglableSymmetricRanges(documentText: string, regex: RegExp): Range[] {
     if (!this.activeEditor) return [];
 
     let match;
@@ -78,9 +80,12 @@ export class Decorator {
     while ((match = regex.exec(documentText))) {
       const group = match[0];
 
+      const startGroup = match[1] || [];
+      const endGroup = match[match.length - 1] || [];
+
       const openingStartPosition = this.activeEditor.document.positionAt(match.index);
-      const openingEndPosition = this.activeEditor.document.positionAt(match.index + length);
-      const closingStartPosition = this.activeEditor.document.positionAt(match.index + group.length - length);
+      const openingEndPosition = this.activeEditor.document.positionAt(match.index + startGroup.length);
+      const closingStartPosition = this.activeEditor.document.positionAt(match.index + group.length - endGroup.length);
       const closingEndPosition = this.activeEditor.document.positionAt(match.index + group.length);
       const fullRange = new Range(openingStartPosition, closingEndPosition);
       if (this.isLineOfRangeSelected(fullRange)) {
