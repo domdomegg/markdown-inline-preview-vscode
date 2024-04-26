@@ -3,8 +3,10 @@ import {
   DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType,
 } from './decorations';
 
-const boldRegex = /\*{2}((?=[^\s*]).*?[^\s*])\*{2}/g;
-const italicRegex = /(?<!\*)\*((?=[^\s*]).*?[^\s*])\*(?!\*)/g;
+const boldRegex = /(\*{2}|_{2})((?=[^\s*_]).*?[^\s*_])(\1)/g;
+const italicRegex = /(?<!\*|_)(\*|_)((?=[^\s*_]).*?[^\s*_])(\1)(?!\*|_)/g;
+const strikethroughRegex = /(?<!~)(~{2})((?=[^\s~]).*?[^\s~])(~{2})(?!~)/g;
+const inlineCodeRegex = /(`)((?=[^\s`]).*?[^\s`])(`)/g;
 const hRegex = /^[ \t]*#{1,6}([ \t].*|$)/gm;
 const h1Regex = /^[ \t]*#{1}([ \t].*|$)/gm;
 const h2Regex = /^[ \t]*#{2}([ \t].*|$)/gm;
@@ -44,6 +46,8 @@ export class Decorator {
     const hiddenRanges = [];
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, boldRegex, 2));
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, italicRegex, 1));
+    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, strikethroughRegex, 2));
+    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, inlineCodeRegex, 1));
     hiddenRanges.push(...this.getHeadingHidingRanges(documentText));
     this.activeEditor.setDecorations(this.hideDecorationType, hiddenRanges);
 
