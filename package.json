@@ -1,6 +1,6 @@
 {
   "name": "markdown-inline-preview-vscode",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A VS Code extension for improving the display of markdown directly in the editor",
   "license": "MIT",
   "author": "Adam Jones (domdomegg)",
