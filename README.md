@@ -7,7 +7,7 @@ https://github.com/domdomegg/markdown-inline-preview-vscode/assets/4953590/112da
 Tweaks made include:
 
 - Making headings larger
-- Hiding bold and italic formatting characters
+- Hiding bold, italic, strikethrough and code formatting characters
 - Disabling coloring of bold text and headings
 
 ## Usage
