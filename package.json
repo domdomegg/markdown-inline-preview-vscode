@@ -40,7 +40,7 @@
     "eslint": "^8.57.0",
     "eslint-config-domdomegg": "^1.2.3",
     "glob": "^10.3.12",
-    "mocha": "^10.4.0",
+    "mocha": "^10.8.2",
     "ovsx": "^0.9.0",
     "tsconfig-domdomegg": "^1.0.0",
     "typescript": "^5.4.4"
