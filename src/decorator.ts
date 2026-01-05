@@ -8,6 +8,7 @@ const italicRegex = /(?<!\*|_)(\*|_)((?=[^\s*_]).*?[^\s*_])(\1)(?!\*|_)/g;
 const strikethroughRegex = /(?<!~)(~{2})((?=[^\s~]).*?[^\s~])(~{2})(?!~)/g;
 const inlineCodeRegex = /(`)((?=[^\s`]).*?[^\s`])(`)/g;
 const blockCodeRegex = /((`{3}|~{3})\w*\n)(.*\n)*?(\2\n)/g;
+const simpleURIRegex = /(<)((?=[^\s<>]).*?[^\s<>])(>)/g;
 const hRegex = /^[ \t]*#{1,6}([ \t].*|$)/gm;
 const h1Regex = /^[ \t]*#{1}([ \t].*|$)/gm;
 const h2Regex = /^[ \t]*#{2}([ \t].*|$)/gm;
@@ -50,6 +51,7 @@ export class Decorator {
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, strikethroughRegex));
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, inlineCodeRegex));
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, blockCodeRegex));
+    hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, simpleURIRegex));
     hiddenRanges.push(...this.getHeadingHidingRanges(documentText));
     this.activeEditor.setDecorations(this.hideDecorationType, hiddenRanges);
 
