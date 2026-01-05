@@ -1,6 +1,7 @@
 import { Range, TextEditor } from 'vscode';
 import {
   DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType,
+  URIDecorationType,
 } from './decorations';
 
 const boldRegex = /(\*{2}|_{2})((?=[^\s*_]).*?[^\s*_])(\1)/g;
@@ -9,6 +10,7 @@ const strikethroughRegex = /(?<!~)(~{2})((?=[^\s~]).*?[^\s~])(~{2})(?!~)/g;
 const inlineCodeRegex = /(`)((?=[^\s`]).*?[^\s`])(`)/g;
 const blockCodeRegex = /((`{3}|~{3})\w*\n)(.*\n)*?(\2\n)/g;
 const simpleURIRegex = /(<)((?=[^\s<>]).*?[^\s<>])(>)/g;
+const aliasedURIRegex = /(\[)([^\]]+)(\]\()([^\s)]+)(\))/g;
 const hRegex = /^[ \t]*#{1,6}([ \t].*|$)/gm;
 const h1Regex = /^[ \t]*#{1}([ \t].*|$)/gm;
 const h2Regex = /^[ \t]*#{2}([ \t].*|$)/gm;
@@ -26,6 +28,8 @@ export class Decorator {
   xlTextDecorationType = XlTextDecorationType();
 
   lTextDecorationType = LTextDecorationType();
+
+  URIDecorationType = URIDecorationType();
 
   setActiveEditor(textEditor: TextEditor | undefined) {
     if (!textEditor) {
@@ -45,6 +49,9 @@ export class Decorator {
 
     const documentText = this.activeEditor.document.getText();
 
+    const aliasedURIRanges = this.getAliasedURIRanges(documentText);
+    this.activeEditor.setDecorations(this.URIDecorationType, aliasedURIRanges.linkTextRanges);
+
     const hiddenRanges = [];
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, boldRegex));
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, italicRegex));
@@ -53,6 +60,8 @@ export class Decorator {
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, blockCodeRegex));
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, simpleURIRegex));
     hiddenRanges.push(...this.getHeadingHidingRanges(documentText));
+    hiddenRanges.push(...aliasedURIRanges.hideRanges);
+
     this.activeEditor.setDecorations(this.hideDecorationType, hiddenRanges);
 
     const defaultColorRanges = [];
@@ -125,6 +134,55 @@ export class Decorator {
       );
     }
     return ranges;
+  }
+
+  getAliasedURIRanges(documentText: string) {
+    if (!this.activeEditor) return { hideRanges: [], linkTextRanges: [] };
+
+    let match;
+    const hideRanges = [];
+    const linkTextRanges = [];
+
+    while ((match = aliasedURIRegex.exec(documentText))) {
+      // Groups: [0] = full match, [1] = '[', [2] = link text, [3] = '](', [4] = URL, [5] = ')'
+      const openBracket = match[1] || '';
+      const linkText = match[2] || '';
+
+      const fullRange = new Range(
+        this.activeEditor.document.positionAt(match.index),
+        this.activeEditor.document.positionAt(match.index + match[0].length),
+      );
+
+      if (this.isLineOfRangeSelected(fullRange)) {
+        continue;
+      }
+
+      // Hide '[', '](', URI, and ')'
+      const openBracketStart = match.index;
+      const linkTextStart = openBracketStart + openBracket.length;
+      const middlePartStart = linkTextStart + linkText.length; // This is where '](' starts
+
+      hideRanges.push(
+        new Range(
+          this.activeEditor.document.positionAt(openBracketStart),
+          this.activeEditor.document.positionAt(linkTextStart),
+        ),
+        new Range(
+          this.activeEditor.document.positionAt(middlePartStart),
+          this.activeEditor.document.positionAt(match.index + match[0].length),
+        ),
+      );
+
+      // Apply underline decoration to link text
+      linkTextRanges.push(
+        new Range(
+          this.activeEditor.document.positionAt(linkTextStart),
+          this.activeEditor.document.positionAt(middlePartStart),
+        ),
+      );
+    }
+
+    return { hideRanges, linkTextRanges };
   }
 
   getRanges(documentText: string, regex: RegExp) {

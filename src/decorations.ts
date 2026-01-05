@@ -35,3 +35,11 @@ export function LTextDecorationType() {
     textDecoration: 'none; font-size: 110%;',
   });
 }
+
+export function URIDecorationType() {
+  return window.createTextEditorDecorationType({
+    textDecoration: 'none; border-bottom: 1px solid currentColor',
+    color: new ThemeColor('editor.foreground'),
+    cursor: 'pointer',
+  });
+}
