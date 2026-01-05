@@ -14,7 +14,7 @@ export function HideDecorationType() {
 
 export function DefaultColorDecorationType() {
   return window.createTextEditorDecorationType({
-    color: new ThemeColor('foreground'),
+    color: new ThemeColor('editor.foreground'),
   });
 }
 
