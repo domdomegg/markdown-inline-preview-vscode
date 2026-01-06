@@ -26,15 +26,55 @@
     "configuration": {
       "title": "Markdown Inline Preview",
       "properties": {
-        "markdownInlinePreview.hideAliasedURIs": {
+        "markdownInlinePreview.bold": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hide bold syntax markers (**text** or __text__)."
+        },
+        "markdownInlinePreview.italic": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hide italic syntax markers (*text* or _text_)."
+        },
+        "markdownInlinePreview.strikethrough": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hide strikethrough syntax markers (~~text~~)."
+        },
+        "markdownInlinePreview.inlineCode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hide inline code syntax markers (`code`)."
+        },
+        "markdownInlinePreview.blockCode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hide code block syntax markers (```language)."
+        },
+        "markdownInlinePreview.simpleURI": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hide simple URI syntax markers (<url>)."
+        },
+        "markdownInlinePreview.aliasedURIs": {
           "type": "boolean",
           "default": false,
           "description": "Hide markdown link syntax for aliased URIs (e.g., [text](uri)). When enabled, only the link text is shown."
         },
-        "markdownInlinePreview.hideReferenceURIFully": {
+        "markdownInlinePreview.referenceURIs": {
           "type": "boolean",
           "default": true,
-          "description": "Hide the reference part of reference-style URIs (e.g., [text][ref]). When enabled, only the link text is shown."
+          "description": "Hide reference-style URI syntax markers (e.g., [text][ref])."
+        },
+        "markdownInlinePreview.referenceURIsFully": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hide the reference part of reference-style URIs (e.g., [text][ref]). When enabled, only the link text is shown. Only applies when referenceURIs is enabled."
+        },
+        "markdownInlinePreview.headings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hide heading syntax markers (# Heading)."
         }
       }
     }

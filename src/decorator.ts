@@ -67,29 +67,52 @@ export class Decorator {
     const documentText = this.activeEditor.document.getText();
     const config = workspace.getConfiguration('markdownInlinePreview');
 
+    // Collect all decorations and link data
     const allDecorations: Decoration[] = [];
     const allLinks: LinkData[] = [];
 
-    allDecorations.push(...this.bold(documentText));
-    allDecorations.push(...this.italic(documentText));
-    allDecorations.push(...this.strikethrough(documentText));
-    allDecorations.push(...this.inlineCode(documentText));
-    allDecorations.push(...this.blockCode(documentText));
-    allDecorations.push(...this.simpleURI(documentText));
-    allDecorations.push(...this.headings(documentText));
+    if (config.get<boolean>('bold', true)) {
+      allDecorations.push(...this.bold(documentText));
+    }
 
-    const hideAliasedURIs = config.get<boolean>('hideAliasedURIs', false);
-    if (hideAliasedURIs) {
+    if (config.get<boolean>('italic', true)) {
+      allDecorations.push(...this.italic(documentText));
+    }
+
+    if (config.get<boolean>('strikethrough', true)) {
+      allDecorations.push(...this.strikethrough(documentText));
+    }
+
+    if (config.get<boolean>('inlineCode', true)) {
+      allDecorations.push(...this.inlineCode(documentText));
+    }
+
+    if (config.get<boolean>('blockCode', true)) {
+      allDecorations.push(...this.blockCode(documentText));
+    }
+
+    if (config.get<boolean>('simpleURI', true)) {
+      allDecorations.push(...this.simpleURI(documentText));
+    }
+
+    if (config.get<boolean>('headings', true)) {
+      allDecorations.push(...this.headings(documentText));
+    }
+
+    if (config.get<boolean>('aliasedURIs', false)) {
       const aliasedURIResult = this.aliasedURI(documentText);
       allDecorations.push(...aliasedURIResult.decorations);
       allLinks.push(...aliasedURIResult.linkData);
     }
 
-    const hideReferenceURIFully = config.get<boolean>('hideReferenceURIFully', false);
-    const referenceURIResult = this.referenceURI(documentText, hideReferenceURIFully);
-    allDecorations.push(...referenceURIResult.decorations);
-    allLinks.push(...referenceURIResult.linkData);
+    if (config.get<boolean>('referenceURIs', true)) {
+      const hideReferenceURIFully = config.get<boolean>('referenceURIsFully', true);
+      const referenceURIResult = this.referenceURI(documentText, hideReferenceURIFully);
+      allDecorations.push(...referenceURIResult.decorations);
+      allLinks.push(...referenceURIResult.linkData);
+    }
 
+    // Apply decorations, skipping those in selected lines
     const decorationMap = new Map<TextEditorDecorationType, Range[]>();
     allDecorations.forEach((decoration) => {
       if (!this.isLineOfRangeSelected(decoration.parent)) {
@@ -100,7 +123,7 @@ export class Decorator {
     });
 
     if (this.linkProvider) {
-      const filteredLinks = allLinks.filter((link) => !this.isLineOfRangeSelected(link.parent));
+      const filteredLinks = allLinks.filter((link) => !this.isLineOfRangeSelected(link.range));
       this.linkProvider.links = filteredLinks;
       this.linkProvider.triggerUpdate();
     }
