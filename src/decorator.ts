@@ -7,9 +7,25 @@ import {
 import { LinkData, MarkdownDocumentLinkProvider } from './documentLinkProvider';
 
 type Decoration = {
-  ranges: Range[];
-  decorationType: TextEditorDecorationType;
+  range: Range;
+  type: TextEditorDecorationType;
+  parent: Range; // Full range of the markdown syntax element this range belongs to.
 };
+
+// Regex patterns for markdown syntax
+// Note: not in the respective function to avoid recompilation on each call
+const BOLD_REGEX = /(\*{2}|_{2})((?=[^\s*_]).*?[^\s*_])(\1)/g;
+const ITALIC_REGEX = /(?<!\*|_)(\*|_)((?=[^\s*_]).*?[^\s*_])(\1)(?!\*|_)/g;
+const STRIKETHROUGH_REGEX = /(?<!~)(~{2})((?=[^\s~]).*?[^\s~])(~{2})(?!~)/g;
+const INLINE_CODE_REGEX = /(`)((?=[^\s`]).*?[^\s`])(`)/g;
+const BLOCK_CODE_REGEX = /((`{3}|~{3})\w*\n)(.*\n)*?(\2\n)/g;
+const SIMPLE_URI_REGEX = /(<)((?=[^\s<>]).*?[^\s<>])(>)/g;
+const ALIASED_URI_REGEX = /(\[)([^\]]+)(\]\()([^\s)]+)(\))/g;
+const REFERENCE_URI_REGEX = /(\[)([^\]]+)(\])(\[)([^\]]+)(\])/g;
+const ALL_HEADINGS_REGEX = /^[ \t]*#{1,6}([ \t].*|$)/gm;
+const H1_REGEX = /^[ \t]*#{1}([ \t].*|$)/gm;
+const H2_REGEX = /^[ \t]*#{2}([ \t].*|$)/gm;
+const H3_REGEX = /^[ \t]*#{3}([ \t].*|$)/gm;
 
 export class Decorator {
   activeEditor: TextEditor | undefined;
@@ -60,6 +76,7 @@ export class Decorator {
     allDecorations.push(...this.inlineCode(documentText));
     allDecorations.push(...this.blockCode(documentText));
     allDecorations.push(...this.simpleURI(documentText));
+    allDecorations.push(...this.headings(documentText));
 
     const hideAliasedURIs = config.get<boolean>('hideAliasedURIs', false);
     if (hideAliasedURIs) {
@@ -73,20 +90,20 @@ export class Decorator {
     allDecorations.push(...referenceURIResult.decorations);
     allLinks.push(...referenceURIResult.linkData);
 
-    allDecorations.push(...this.headings(documentText));
-
-    if (this.linkProvider) {
-      this.linkProvider.links = allLinks;
-      this.linkProvider.triggerUpdate();
-    }
-
-    // Bundle decorations by type (for speed?)
     const decorationMap = new Map<TextEditorDecorationType, Range[]>();
     allDecorations.forEach((decoration) => {
-      const existing = decorationMap.get(decoration.decorationType) || [];
-      existing.push(...decoration.ranges);
-      decorationMap.set(decoration.decorationType, existing);
+      if (!this.isLineOfRangeSelected(decoration.parent)) {
+        const existing = decorationMap.get(decoration.type) || [];
+        existing.push(decoration.range);
+        decorationMap.set(decoration.type, existing);
+      }
     });
+
+    if (this.linkProvider) {
+      const filteredLinks = allLinks.filter((link) => !this.isLineOfRangeSelected(link.parent));
+      this.linkProvider.links = filteredLinks;
+      this.linkProvider.triggerUpdate();
+    }
 
     decorationMap.forEach((ranges, decorationType) => {
       this.activeEditor!.setDecorations(decorationType, ranges);
@@ -98,13 +115,12 @@ export class Decorator {
    * Hides the ** or __ symbols, applies default color to content
    */
   bold(documentText: string): Decoration[] {
-    const regex = /(\*{2}|_{2})((?=[^\s*_]).*?[^\s*_])(\1)/g;
-    const hideRanges = this.getSymmetricHideRanges(documentText, regex);
-    const colorRanges = this.getFullMatchRanges(documentText, regex);
+    const hideRanges = this.getSymmetricHideRanges(documentText, BOLD_REGEX);
+    const colorRanges = this.getFullMatchRanges(documentText, BOLD_REGEX);
 
     return [
-      { ranges: hideRanges, decorationType: this.hideDecorationType },
-      { ranges: colorRanges, decorationType: this.defaultColorDecorationType },
+      ...hideRanges.map(({ range, parent }) => ({ range, parent, type: this.hideDecorationType })),
+      ...colorRanges.map(({ range, parent }) => ({ range, parent, type: this.defaultColorDecorationType })),
     ];
   }
 
@@ -113,13 +129,12 @@ export class Decorator {
    * Hides the * or _ symbols, applies default color to content
    */
   italic(documentText: string): Decoration[] {
-    const regex = /(?<!\*|_)(\*|_)((?=[^\s*_]).*?[^\s*_])(\1)(?!\*|_)/g;
-    const hideRanges = this.getSymmetricHideRanges(documentText, regex);
-    const colorRanges = this.getFullMatchRanges(documentText, regex);
+    const hideRanges = this.getSymmetricHideRanges(documentText, ITALIC_REGEX);
+    const colorRanges = this.getFullMatchRanges(documentText, ITALIC_REGEX);
 
     return [
-      { ranges: hideRanges, decorationType: this.hideDecorationType },
-      { ranges: colorRanges, decorationType: this.defaultColorDecorationType },
+      ...hideRanges.map(({ range, parent }) => ({ range, parent, type: this.hideDecorationType })),
+      ...colorRanges.map(({ range, parent }) => ({ range, parent, type: this.defaultColorDecorationType })),
     ];
   }
 
@@ -128,12 +143,8 @@ export class Decorator {
    * Hides the ~~ symbols
    */
   strikethrough(documentText: string): Decoration[] {
-    const regex = /(?<!~)(~{2})((?=[^\s~]).*?[^\s~])(~{2})(?!~)/g;
-    const hideRanges = this.getSymmetricHideRanges(documentText, regex);
-
-    return [
-      { ranges: hideRanges, decorationType: this.hideDecorationType },
-    ];
+    return this.getSymmetricHideRanges(documentText, STRIKETHROUGH_REGEX)
+      .map(({ range, parent }) => ({ range, parent, type: this.hideDecorationType }));
   }
 
   /**
@@ -141,12 +152,8 @@ export class Decorator {
    * Hides the ` symbols
    */
   inlineCode(documentText: string): Decoration[] {
-    const regex = /(`)((?=[^\s`]).*?[^\s`])(`)/g;
-    const hideRanges = this.getSymmetricHideRanges(documentText, regex);
-
-    return [
-      { ranges: hideRanges, decorationType: this.hideDecorationType },
-    ];
+    return this.getSymmetricHideRanges(documentText, INLINE_CODE_REGEX)
+      .map(({ range, parent }) => ({ range, parent, type: this.hideDecorationType }));
   }
 
   /**
@@ -154,12 +161,8 @@ export class Decorator {
    * Hides the ``` symbols
    */
   blockCode(documentText: string): Decoration[] {
-    const regex = /((`{3}|~{3})\w*\n)(.*\n)*?(\2\n)/g;
-    const hideRanges = this.getSymmetricHideRanges(documentText, regex);
-
-    return [
-      { ranges: hideRanges, decorationType: this.hideDecorationType },
-    ];
+    return this.getSymmetricHideRanges(documentText, BLOCK_CODE_REGEX)
+      .map(({ range, parent }) => ({ range, parent, type: this.hideDecorationType }));
   }
 
   /**
@@ -167,12 +170,8 @@ export class Decorator {
    * Hides the < and > symbols
    */
   simpleURI(documentText: string): Decoration[] {
-    const regex = /(<)((?=[^\s<>]).*?[^\s<>])(>)/g;
-    const hideRanges = this.getSymmetricHideRanges(documentText, regex);
-
-    return [
-      { ranges: hideRanges, decorationType: this.hideDecorationType },
-    ];
+    return this.getSymmetricHideRanges(documentText, SIMPLE_URI_REGEX)
+      .map(({ range, parent }) => ({ range, parent, type: this.hideDecorationType }));
   }
 
   /**
@@ -182,42 +181,33 @@ export class Decorator {
   aliasedURI(documentText: string): { decorations: Decoration[]; linkData: LinkData[] } {
     if (!this.activeEditor) return { decorations: [], linkData: [] };
 
-    const regex = /(\[)([^\]]+)(\]\()([^\s)]+)(\))/g;
-    const hideRanges: Range[] = [];
-    const linkStylingRanges: Range[] = [];
+    const decorations: Decoration[] = [];
     const linkData: LinkData[] = [];
     let match;
 
-    while ((match = regex.exec(documentText))) {
+    while ((match = ALIASED_URI_REGEX.exec(documentText))) {
       // Groups: [0] = full match, [1] = '[', [2] = link text, [3] = '](', [4] = URL, [5] = ')'
       const openBracket = match[1] || '';
       const linkText = match[2] || '';
       const url = match[4] || '';
 
-      const fullRange = this.range(match.index, match.index + match[0].length);
-      if (this.isLineOfRangeSelected(fullRange)) {
-        continue;
-      }
-
       const openBracketStart = match.index;
       const linkTextStart = openBracketStart + openBracket.length;
       const middlePartStart = linkTextStart + linkText.length;
+      const parent = this.range(match.index, match.index + match[0].length);
 
-      hideRanges.push(
-        this.range(openBracketStart, linkTextStart),
-        this.range(middlePartStart, match.index + match[0].length),
+      decorations.push(
+        { range: this.range(openBracketStart, linkTextStart), parent, type: this.hideDecorationType },
+        { range: this.range(middlePartStart, match.index + match[0].length), parent, type: this.hideDecorationType },
       );
 
       const linkRange = this.range(linkTextStart, middlePartStart);
-      linkStylingRanges.push(linkRange);
+      decorations.push({ range: linkRange, parent, type: this.URIDecorationType });
       linkData.push({ range: linkRange, target: url });
     }
 
     return {
-      decorations: [
-        { ranges: hideRanges, decorationType: this.hideDecorationType },
-        { ranges: linkStylingRanges, decorationType: this.URIDecorationType },
-      ],
+      decorations,
       linkData,
     };
   }
@@ -229,25 +219,19 @@ export class Decorator {
   referenceURI(documentText: string, hideFully: boolean): { decorations: Decoration[]; linkData: LinkData[] } {
     if (!this.activeEditor) return { decorations: [], linkData: [] };
 
-    const regex = /(\[)([^\]]+)(\])(\[)([^\]]+)(\])/g;
-    const hideRanges: Range[] = [];
-    const linkStylingRanges: Range[] = [];
+    const decorations: Decoration[] = [];
     const linkData: LinkData[] = [];
     let match;
 
-    while ((match = regex.exec(documentText))) {
+    while ((match = REFERENCE_URI_REGEX.exec(documentText))) {
       // Groups: [0] = full match, [1] = '[', [2] = link text, [3] = ']', [4] = '[', [5] = ref id, [6] = ']'
       const openBracket = match[1] || '';
       const linkText = match[2] || '';
       const closeBracket = match[3] || '';
 
-      const fullRange = this.range(match.index, match.index + match[0].length);
-      if (this.isLineOfRangeSelected(fullRange)) {
-        continue;
-      }
-
       const linkTextStart = match.index + openBracket.length;
       const linkTextEnd = linkTextStart + linkText.length;
+      const parent = this.range(match.index, match.index + match[0].length);
 
       const openLinkBracketRange = this.range(match.index, linkTextStart);
       const linkTextRange = this.range(linkTextStart, linkTextEnd);
@@ -255,19 +239,23 @@ export class Decorator {
       const refPartRange = this.range(linkTextEnd + closeBracket.length, match.index + match[0].length);
 
       if (hideFully) {
-        hideRanges.push(openLinkBracketRange, closeLinkBracketRange, refPartRange);
-        linkStylingRanges.push(linkTextRange);
+        decorations.push(
+          { range: openLinkBracketRange, parent, type: this.hideDecorationType },
+          { range: closeLinkBracketRange, parent, type: this.hideDecorationType },
+          { range: refPartRange, parent, type: this.hideDecorationType },
+        );
+        decorations.push({ range: linkTextRange, parent, type: this.URIDecorationType });
       } else {
-        hideRanges.push(openLinkBracketRange, closeLinkBracketRange);
-        linkStylingRanges.push(linkTextRange);
+        decorations.push(
+          { range: openLinkBracketRange, parent, type: this.hideDecorationType },
+          { range: closeLinkBracketRange, parent, type: this.hideDecorationType },
+        );
+        decorations.push({ range: linkTextRange, parent, type: this.URIDecorationType });
       }
     }
 
     return {
-      decorations: [
-        { ranges: hideRanges, decorationType: this.hideDecorationType },
-        { ranges: linkStylingRanges, decorationType: this.URIDecorationType },
-      ],
+      decorations,
       linkData,
     };
   }
@@ -279,40 +267,31 @@ export class Decorator {
   headings(documentText: string): Decoration[] {
     if (!this.activeEditor) return [];
 
-    const allHeadingsRegex = /^[ \t]*#{1,6}([ \t].*|$)/gm;
-    const h1Regex = /^[ \t]*#{1}([ \t].*|$)/gm;
-    const h2Regex = /^[ \t]*#{2}([ \t].*|$)/gm;
-    const h3Regex = /^[ \t]*#{3}([ \t].*|$)/gm;
-
-    const hideRanges: Range[] = [];
+    const hideRanges: Array<{ range: Range; parent: Range }> = [];
     let match;
 
-    while ((match = allHeadingsRegex.exec(documentText))) {
+    while ((match = ALL_HEADINGS_REGEX.exec(documentText))) {
       const group = match[0];
       const prefixLength = group.match(/^[ \t]*#{1,6}([ \t]|$)/)?.[0]?.length ?? 0;
       if (prefixLength === 0) {
         continue;
       }
 
-      const fullRange = this.range(match.index, match.index + group.length);
-      if (this.isLineOfRangeSelected(fullRange)) {
-        continue;
-      }
-
-      hideRanges.push(this.range(match.index, match.index + prefixLength));
+      const parent = this.range(match.index, match.index + group.length);
+      hideRanges.push({ range: this.range(match.index, match.index + prefixLength), parent });
     }
 
-    const colorRanges = this.getFullMatchRanges(documentText, allHeadingsRegex);
-    const h1Ranges = this.getFullMatchRanges(documentText, h1Regex);
-    const h2Ranges = this.getFullMatchRanges(documentText, h2Regex);
-    const h3Ranges = this.getFullMatchRanges(documentText, h3Regex);
+    const colorRanges = this.getFullMatchRanges(documentText, ALL_HEADINGS_REGEX);
+    const h1Ranges = this.getFullMatchRanges(documentText, H1_REGEX);
+    const h2Ranges = this.getFullMatchRanges(documentText, H2_REGEX);
+    const h3Ranges = this.getFullMatchRanges(documentText, H3_REGEX);
 
     return [
-      { ranges: hideRanges, decorationType: this.hideDecorationType },
-      { ranges: colorRanges, decorationType: this.defaultColorDecorationType },
-      { ranges: h1Ranges, decorationType: this.xxlTextDecorationType },
-      { ranges: h2Ranges, decorationType: this.xlTextDecorationType },
-      { ranges: h3Ranges, decorationType: this.lTextDecorationType },
+      ...hideRanges.map(({ range, parent }) => ({ range, parent, type: this.hideDecorationType })),
+      ...colorRanges.map(({ range, parent }) => ({ range, parent, type: this.defaultColorDecorationType })),
+      ...h1Ranges.map(({ range, parent }) => ({ range, parent, type: this.xxlTextDecorationType })),
+      ...h2Ranges.map(({ range, parent }) => ({ range, parent, type: this.xlTextDecorationType })),
+      ...h3Ranges.map(({ range, parent }) => ({ range, parent, type: this.lTextDecorationType })),
     ];
   }
 
@@ -326,12 +305,12 @@ export class Decorator {
 
   /**
    * Gets hide ranges for symmetric markdown syntax (e.g., **bold**, *italic*, ~~strike~~)
-   * Hides opening and closing symbols unless the line is selected
+   * Returns opening and closing symbol ranges along with their parent ranges
    */
-  getSymmetricHideRanges(documentText: string, regex: RegExp): Range[] {
+  getSymmetricHideRanges(documentText: string, regex: RegExp): Array<{ range: Range; parent: Range }> {
     if (!this.activeEditor) return [];
 
-    const ranges: Range[] = [];
+    const results: Array<{ range: Range; parent: Range }> = [];
     let match;
 
     while ((match = regex.exec(documentText))) {
@@ -340,35 +319,33 @@ export class Decorator {
       const startGroup = match[1] || [];
       const endGroup = match[match.length - 1] || [];
 
-      const fullRange = this.range(match.index, match.index + group.length);
-      if (this.isLineOfRangeSelected(fullRange)) {
-        continue;
-      }
+      const parent = this.range(match.index, match.index + group.length);
 
-      ranges.push(
-        this.range(match.index, match.index + startGroup.length),
-        this.range(match.index + group.length - endGroup.length, match.index + group.length),
+      results.push(
+        { range: this.range(match.index, match.index + startGroup.length), parent },
+        { range: this.range(match.index + group.length - endGroup.length, match.index + group.length), parent },
       );
     }
 
-    return ranges;
+    return results;
   }
 
   /**
    * Gets ranges for full regex matches (used for color/size decorations)
    */
-  getFullMatchRanges(documentText: string, regex: RegExp): Range[] {
+  getFullMatchRanges(documentText: string, regex: RegExp): Array<{ range: Range; parent: Range }> {
     if (!this.activeEditor) return [];
 
-    const ranges: Range[] = [];
+    const results: Array<{ range: Range; parent: Range }> = [];
     let match;
 
     while ((match = regex.exec(documentText))) {
       const group = match[0];
-      ranges.push(this.range(match.index, match.index + group.length));
+      const fullRange = this.range(match.index, match.index + group.length);
+      results.push({ range: fullRange, parent: fullRange });
     }
 
-    return ranges;
+    return results;
   }
 
   /**
