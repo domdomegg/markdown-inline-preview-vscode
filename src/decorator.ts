@@ -116,24 +116,22 @@ export class Decorator {
     let match;
     const ranges = [];
     while ((match = regex.exec(documentText))) {
+      // Groups: [0] = full match, [1] = starting symbols, [2,i-1] = content, [i] = ending symbols
       const group = match[0];
-
       const startGroup = match[1] || [];
       const endGroup = match[match.length - 1] || [];
 
-      const openingStartPosition = this.activeEditor.document.positionAt(match.index);
-      const openingEndPosition = this.activeEditor.document.positionAt(match.index + startGroup.length);
-      const closingStartPosition = this.activeEditor.document.positionAt(match.index + group.length - endGroup.length);
-      const closingEndPosition = this.activeEditor.document.positionAt(match.index + group.length);
-      const fullRange = new Range(openingStartPosition, closingEndPosition);
+      const fullRange = this.range(match.index, match.index + group.length);
       if (this.isLineOfRangeSelected(fullRange)) {
         continue;
       }
+
       ranges.push(
-        new Range(openingStartPosition, openingEndPosition),
-        new Range(closingStartPosition, closingEndPosition),
+        this.range(match.index, match.index + startGroup.length),
+        this.range(match.index + group.length - endGroup.length, match.index + group.length),
       );
     }
+
     return ranges;
   }
 
@@ -149,17 +147,14 @@ export class Decorator {
         continue;
       }
 
-      const startPosition = this.activeEditor.document.positionAt(match.index);
-      const endOfPrefixPosition = this.activeEditor.document.positionAt(match.index + prefixLength);
-      const endPosition = this.activeEditor.document.positionAt(match.index + group.length);
-      const fullRange = new Range(startPosition, endPosition);
-      if (this.isLineOfRangeSelected(fullRange)) { // or this.isRangeSelected(range)?
+      const fullRange = this.range(match.index, match.index + group.length);
+      if (this.isLineOfRangeSelected(fullRange)) {
         continue;
       }
-      ranges.push(
-        new Range(startPosition, endOfPrefixPosition),
-      );
+
+      ranges.push(this.range(match.index, match.index + prefixLength));
     }
+
     return ranges;
   }
 
@@ -177,11 +172,7 @@ export class Decorator {
       const linkText = match[2] || '';
       const url = match[4] || '';
 
-      const fullRange = new Range(
-        this.activeEditor.document.positionAt(match.index),
-        this.activeEditor.document.positionAt(match.index + match[0].length),
-      );
-
+      const fullRange = this.range(match.index, match.index + match[0].length);
       if (this.isLineOfRangeSelected(fullRange)) {
         continue;
       }
@@ -192,21 +183,12 @@ export class Decorator {
       const middlePartStart = linkTextStart + linkText.length; // This is where '](' starts
 
       hideRanges.push(
-        new Range(
-          this.activeEditor.document.positionAt(openBracketStart),
-          this.activeEditor.document.positionAt(linkTextStart),
-        ),
-        new Range(
-          this.activeEditor.document.positionAt(middlePartStart),
-          this.activeEditor.document.positionAt(match.index + match[0].length),
-        ),
+        this.range(openBracketStart, linkTextStart),
+        this.range(middlePartStart, match.index + match[0].length),
       );
 
       // Store link data for the DocumentLinkProvider
-      const linkRange = new Range(
-        this.activeEditor.document.positionAt(linkTextStart),
-        this.activeEditor.document.positionAt(middlePartStart),
-      );
+      const linkRange = this.range(linkTextStart, middlePartStart);
       linkStylingRanges.push(linkRange);
       linkData.push({ range: linkRange, target: url });
     }
@@ -228,11 +210,7 @@ export class Decorator {
       const linkText = match[2] || '';
       const closeBracket = match[3] || '';
 
-      const fullRange = new Range(
-        this.activeEditor.document.positionAt(match.index),
-        this.activeEditor.document.positionAt(match.index + match[0].length),
-      );
-
+      const fullRange = this.range(match.index, match.index + match[0].length);
       if (this.isLineOfRangeSelected(fullRange)) {
         continue;
       }
@@ -240,22 +218,10 @@ export class Decorator {
       const linkTextStart = match.index + openBracket.length;
       const linkTextEnd = linkTextStart + linkText.length;
 
-      const openLinkBracketRange = new Range(
-        this.activeEditor.document.positionAt(match.index),
-        this.activeEditor.document.positionAt(linkTextStart),
-      );
-      const linkTextRange = new Range(
-        this.activeEditor.document.positionAt(linkTextStart),
-        this.activeEditor.document.positionAt(linkTextEnd),
-      );
-      const closeLinkBracketRange = new Range(
-        this.activeEditor.document.positionAt(linkTextEnd),
-        this.activeEditor.document.positionAt(linkTextEnd + closeBracket.length),
-      );
-      const refPartRange = new Range(
-        this.activeEditor.document.positionAt(linkTextEnd + closeBracket.length),
-        this.activeEditor.document.positionAt(match.index + match[0].length),
-      );
+      const openLinkBracketRange = this.range(match.index, linkTextStart);
+      const linkTextRange = this.range(linkTextStart, linkTextEnd);
+      const closeLinkBracketRange = this.range(linkTextEnd, linkTextEnd + closeBracket.length);
+      const refPartRange = this.range(linkTextEnd + closeBracket.length, match.index + match[0].length);
 
       if (hideReferenceURIFully) {
         // Only display the link text
@@ -278,13 +244,24 @@ export class Decorator {
     const ranges = [];
     while ((match = regex.exec(documentText))) {
       const group = match[0];
-
-      const startPosition = this.activeEditor.document.positionAt(match.index);
-      const endPosition = this.activeEditor.document.positionAt(match.index + group.length);
-      ranges.push(
-        new Range(startPosition, endPosition),
-      );
+      ranges.push(this.range(match.index, match.index + group.length));
     }
+
     return ranges;
+  }
+
+  /**
+   * Creates a VS Code Range from character offsets in the current document.
+   * @param start - The zero-based character offset for the start of the range
+   * @param end - The zero-based character offset for the end of the range
+   * @returns A Range object spanning from start to end
+   *
+   * @remarks Assumes an active editor is present (this.activeEditor is defined).
+   */
+  range(start: number, end: number): Range {
+    return new Range(
+      this.activeEditor!.document.positionAt(start),
+      this.activeEditor!.document.positionAt(end),
+    );
   }
 }
