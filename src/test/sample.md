@@ -6,7 +6,9 @@ We can use **bold** and _italic_ formatting.
 
 <https://example.com> is a link.
 
-[This is another link](https://example.com)
+[This is another link](https://example.com).
+
+[This is another link with a long alias and also a long link that would create clutter and is a good test case both to demonstrate the value and to test the implementation](https://example.com/some/really/long/path/that/just/keeps/going/on/and/on/and/on?with=query&parameters=too&stuff=like&this=is&a=test&yadayadayadayada=foobarbarfoofoobarbarfoo).
 
 ## Subheading
 

@@ -22,7 +22,18 @@
     "onLanguage:markdown"
   ],
   "main": "./dist/extension.js",
-  "contributes": {},
+  "contributes": {
+    "configuration": {
+      "title": "Markdown Inline Preview",
+      "properties": {
+        "markdownInlinePreview.hideAliasedURIs": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hide markdown link syntax for aliased URIs (e.g., [text](uri)). When enabled, only the link text is shown."
+        }
+      }
+    }
+  },
   "scripts": {
     "test": "echo 'Run tests using the `Run and Debug` preset in VS Code instead.'",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx .",

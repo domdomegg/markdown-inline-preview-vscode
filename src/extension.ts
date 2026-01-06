@@ -16,6 +16,12 @@ export function activate(context: vscode.ExtensionContext) {
     decorator.updateDecorations();
   });
 
+  const changeConfiguration = vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration('markdownInlinePreview.hideAliasedURIs')) {
+      decorator.updateDecorations();
+    }
+  });
+
   const linkProvider = vscode.languages.registerDocumentLinkProvider(
     [{ language: 'markdown' }, { language: 'mdx' }],
     linkProviderInstance,
@@ -23,6 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(changeActiveTextEditor);
   context.subscriptions.push(changeTextEditorSelection);
+  context.subscriptions.push(changeConfiguration);
   context.subscriptions.push(linkProvider);
 }
 

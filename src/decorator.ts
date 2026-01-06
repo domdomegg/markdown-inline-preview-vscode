@@ -1,4 +1,4 @@
-import { Range, TextEditor } from 'vscode';
+import { Range, TextEditor, workspace } from 'vscode';
 import {
   DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType, URIDecorationType,
 } from './decorations';
@@ -54,16 +54,19 @@ export class Decorator {
     }
 
     const documentText = this.activeEditor.document.getText();
+    const config = workspace.getConfiguration('markdownInlinePreview');
+    const hideAliasedURIs = config.get<boolean>('hideAliasedURIs', false);
 
     const aliasedURIRanges = this.getAliasedURIRanges(documentText);
-    if (this.linkProvider) {
-      this.linkProvider.aliasedURIData = aliasedURIRanges.linkData;
-      this.linkProvider.triggerUpdate();
+    if (hideAliasedURIs) {
+      if (this.linkProvider) {
+        this.linkProvider.aliasedURIData = aliasedURIRanges.linkData;
+        this.linkProvider.triggerUpdate();
+      }
+      const linkRanges = aliasedURIRanges.linkData.map((link) => link.range);
+      this.activeEditor.setDecorations(this.URIDecorationType, linkRanges);
+      this.activeEditor.setDecorations(this.hideDecorationType, aliasedURIRanges.hideRanges);
     }
-    this.activeEditor.setDecorations(
-      this.URIDecorationType,
-      aliasedURIRanges.linkData.map((link) => link.range),
-    );
 
     const hiddenRanges = [];
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, boldRegex));
@@ -73,7 +76,6 @@ export class Decorator {
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, blockCodeRegex));
     hiddenRanges.push(...this.getTogglableSymmetricRanges(documentText, simpleURIRegex));
     hiddenRanges.push(...this.getHeadingHidingRanges(documentText));
-    hiddenRanges.push(...aliasedURIRanges.hideRanges);
     this.activeEditor.setDecorations(this.hideDecorationType, hiddenRanges);
 
     const defaultColorRanges = [];
