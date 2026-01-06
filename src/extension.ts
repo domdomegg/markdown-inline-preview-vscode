@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   const linkProvider = vscode.languages.registerDocumentLinkProvider(
-    [{ language: 'markdown' }, { language: 'mdx' }],
+    [{ language: 'markdown' }, { language: 'mdx' }, { language: 'md' }],
     linkProviderInstance,
   );
 

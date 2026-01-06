@@ -10,6 +10,16 @@ We can use **bold** and _italic_ formatting.
 
 [This is another link with a long alias and also a long link that would create clutter and is a good test case both to demonstrate the value and to test the implementation](https://example.com/some/really/long/path/that/just/keeps/going/on/and/on/and/on?with=query&parameters=too&stuff=like&this=is&a=test&yadayadayadayada=foobarbarfoofoobarbarfoo).
 
+This is a [reference-style link][ref1].
+
+This is another [reference link][ref2] with a title.
+
+This uses an [implicit reference].
+
+[ref1]: https://example.com
+[ref2]: https://example.com/path "Optional Title"
+[implicit reference]: https://example.com/implicit
+
 ## Subheading
 
 You still get to see the raw markdown formatting when clicking the relevant line, or selecting the text.

@@ -30,6 +30,11 @@
           "type": "boolean",
           "default": false,
           "description": "Hide markdown link syntax for aliased URIs (e.g., [text](uri)). When enabled, only the link text is shown."
+        },
+        "markdownInlinePreview.hideReferenceURIFully": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hide the reference part of reference-style URIs (e.g., [text][ref]). When enabled, only the link text is shown."
         }
       }
     }
