@@ -76,4 +76,8 @@ To release:
 
 1. Use `npm version <major | minor | patch>` to bump the version
 2. Run `git push --follow-tags` to push with tags
-3. Wait for GitHub Actions to publish to the NPM registry.
+3. GitHub Actions will automatically build and publish to both the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=domdomegg.markdown-inline-preview-vscode) and [OpenVSX Registry](https://open-vsx.org/extension/domdomegg/markdown-inline-preview-vscode)
+
+The CI/CD pipeline requires two secrets configured in GitHub:
+- `AZURE_DEVOPS_TOKEN` - Personal Access Token for VS Code Marketplace
+- `OPEN_VSX_TOKEN` - Personal Access Token for OpenVSX Registry
