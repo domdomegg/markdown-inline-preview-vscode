@@ -5,6 +5,7 @@
   "license": "MIT",
   "author": "Adam Jones (domdomegg)",
   "publisher": "domdomegg",
+  "icon": "branding/icon.jpg",
   "private": "true",
   "repository": {
     "type": "git",
