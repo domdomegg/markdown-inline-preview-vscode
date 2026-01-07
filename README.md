@@ -8,6 +8,7 @@ Tweaks made include:
 
 - Making headings larger
 - Hiding bold, italic, strikethrough and code formatting characters
+- Hiding URI formatting characters
 - Disabling coloring of bold text and headings
 
 ## Usage

@@ -14,7 +14,7 @@ export function HideDecorationType() {
 
 export function DefaultColorDecorationType() {
   return window.createTextEditorDecorationType({
-    color: new ThemeColor('foreground'),
+    color: new ThemeColor('editor.foreground'),
   });
 }
 
@@ -33,5 +33,13 @@ export function XlTextDecorationType() {
 export function LTextDecorationType() {
   return window.createTextEditorDecorationType({
     textDecoration: 'none; font-size: 110%;',
+  });
+}
+
+export function URIDecorationType() {
+  return window.createTextEditorDecorationType({
+    textDecoration: 'none; border-bottom: 1px solid currentColor',
+    color: new ThemeColor('editor.foreground'),
+    cursor: 'pointer',
   });
 }
