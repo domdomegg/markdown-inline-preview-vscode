@@ -2,7 +2,7 @@ import {
   Range, TextEditor, workspace, TextEditorDecorationType,
 } from 'vscode';
 import {
-  DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType, URIDecorationType,
+  DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType, URIDecorationType, SpaceAfterDecorationType,
 } from './decorations';
 import { LinkData, MarkdownDocumentLinkProvider } from './documentLinkProvider';
 
@@ -43,6 +43,8 @@ export class Decorator {
   lTextDecorationType = LTextDecorationType();
 
   URIDecorationType = URIDecorationType();
+
+  spaceAfterDecorationType = SpaceAfterDecorationType();
 
   setLinkProvider(linkProvider: MarkdownDocumentLinkProvider) {
     this.linkProvider = linkProvider;
@@ -274,6 +276,9 @@ export class Decorator {
           { range: closeLinkBracketRange, parent, type: this.hideDecorationType },
         );
         decorations.push({ range: linkTextRange, parent, type: this.URIDecorationType });
+        if (!existingSpace) {
+          decorations.push({ range: linkTextRange, parent, type: this.spaceAfterDecorationType });
+        }
       }
     }
 

@@ -43,3 +43,11 @@ export function URIDecorationType() {
     cursor: 'pointer',
   });
 }
+
+export function SpaceAfterDecorationType() {
+  return window.createTextEditorDecorationType({
+    after: {
+      contentText: ' ',
+    },
+  });
+}
