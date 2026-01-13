@@ -29,7 +29,16 @@ This uses an [implicit reference].
 
 [ref1]: https://example.com
 [ref2]: https://example.com/path "Optional Title"
+[ref3]: https://example.com/another-path
 [implicit reference]: https://example.com/implicit
+
+Some horizontal lines below:
+
+---
+
+***
+
+___
 
 ## Subheading
 

@@ -51,3 +51,12 @@ export function SpaceAfterDecorationType() {
     },
   });
 }
+
+export function HorizontalLineDecorationType() {
+  return window.createTextEditorDecorationType({
+    textDecoration: 'none; display: none;',
+    after: {
+      contentText: '_'.repeat(60),
+    },
+  });
+}

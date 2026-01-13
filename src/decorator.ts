@@ -2,7 +2,7 @@ import {
   Range, TextEditor, workspace, TextEditorDecorationType,
 } from 'vscode';
 import {
-  DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType, URIDecorationType, SpaceAfterDecorationType,
+  DefaultColorDecorationType, HideDecorationType, XxlTextDecorationType, XlTextDecorationType, LTextDecorationType, URIDecorationType, SpaceAfterDecorationType, HorizontalLineDecorationType,
 } from './decorations';
 import { LinkData, MarkdownDocumentLinkProvider } from './documentLinkProvider';
 
@@ -26,6 +26,7 @@ const ALL_HEADINGS_REGEX = /^[ \t]*#{1,6}([ \t].*|$)/gm;
 const H1_REGEX = /^[ \t]*#{1}([ \t].*|$)/gm;
 const H2_REGEX = /^[ \t]*#{2}([ \t].*|$)/gm;
 const H3_REGEX = /^[ \t]*#{3}([ \t].*|$)/gm;
+const HORIZONTAL_LINE_REGEX = /(?:\r?\n)[ \t]*(?:\r?\n)([ \t]*)(-{3,}|\*{3,}|_{3,})([ \t]*)(?=(?:\r?\n)[ \t]*(?:\r?\n))/g;
 
 export class Decorator {
   activeEditor: TextEditor | undefined;
@@ -45,6 +46,8 @@ export class Decorator {
   URIDecorationType = URIDecorationType();
 
   spaceAfterDecorationType = SpaceAfterDecorationType();
+
+  horizontalLineDecorationType = HorizontalLineDecorationType();
 
   setLinkProvider(linkProvider: MarkdownDocumentLinkProvider) {
     this.linkProvider = linkProvider;
@@ -99,6 +102,10 @@ export class Decorator {
 
     if (config.get<boolean>('headings', true)) {
       allDecorations.push(...this.headings(documentText));
+    }
+
+    if (config.get<boolean>('horizontalLine', true)) {
+      allDecorations.push(...this.horizontalLine(documentText));
     }
 
     if (config.get<boolean>('aliasedURIs', false)) {
@@ -322,6 +329,40 @@ export class Decorator {
       ...h2Ranges.map(({ range, parent }) => ({ range, parent, type: this.xlTextDecorationType })),
       ...h3Ranges.map(({ range, parent }) => ({ range, parent, type: this.lTextDecorationType })),
     ];
+  }
+
+  /**
+   * Horizontal lines: ---, ***, ___
+   * Hides the characters and draws a horizontal line
+   */
+  horizontalLine(documentText: string): Decoration[] {
+    if (!this.activeEditor) return [];
+
+    const decorations: Decoration[] = [];
+    let match;
+
+    while ((match = HORIZONTAL_LINE_REGEX.exec(documentText))) {
+      // Regex matches: (\r?\n)[ \t]*(\r?\n)([ \t]*)(-{3,}|\*{3,}|_{3,})([ \t]*)(\r?\n)[ \t]*(\r?\n)
+      // match[0] = full match including blank lines before and after
+      // match[1] = leading spaces/tabs on the horizontal line
+      // match[2] = the horizontal line characters (---, ***, or ___)
+      // match[3] = trailing spaces/tabs on the horizontal line
+      const fullMatch = match[0];
+      const leadingSpace = match[1] || '';
+      const lineChars = match[2] || '';
+      const trailingSpace = match[3] || '';
+
+      // Find where the horizontal line content actually starts
+      // Skip the leading blank line (\n\n or \r\n\r\n)
+      const lineContentStart = fullMatch.lastIndexOf(leadingSpace + lineChars);
+      const lineStart = match.index + lineContentStart;
+      const lineEnd = lineStart + leadingSpace.length + lineChars.length + trailingSpace.length;
+
+      const parent = this.range(lineStart, lineEnd);
+      decorations.push({ range: parent, parent, type: this.horizontalLineDecorationType });
+    }
+
+    return decorations;
   }
 
   // ============================================================================

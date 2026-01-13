@@ -75,6 +75,11 @@
           "type": "boolean",
           "default": true,
           "description": "Hide heading syntax markers (# Heading)."
+        },
+        "markdownInlinePreview.horizontalLine": {
+          "type": "boolean",
+          "default": true,
+          "description": "Replace horizontal line syntax (---, ***, ___) with an actual horizontal line."
         }
       }
     }
