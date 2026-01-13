@@ -21,7 +21,9 @@ def hello_world():
 
 This is a [reference-style link][ref1].
 
-This is another [reference link][ref2] with a title.
+This is another [reference link][ref2] with text after.
+
+This a [reference link] [ref3] with a space before the reference.
 
 This uses an [implicit reference].
 

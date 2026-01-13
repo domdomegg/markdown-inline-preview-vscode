@@ -21,7 +21,7 @@ const INLINE_CODE_REGEX = /(`)((?=[^\s`]).*?[^\s`])(`)/g;
 const BLOCK_CODE_REGEX = /((`{3}|~{3})\w*\n)(.*\n)*?(\2\n)/g;
 const SIMPLE_URI_REGEX = /(<)([a-z][a-z0-9+.-]*:[^\s<>]+)(>)/gi;
 const ALIASED_URI_REGEX = /(\[)([^\]]+)(\]\()([a-z][a-z0-9+.-]*:[^\s)]+)(\))/gi;
-const REFERENCE_URI_REGEX = /(\[)([^\]]+)(\])(\[)([^\]]+)(\])/g;
+const REFERENCE_URI_REGEX = /(\[)([^\]]+)(\])(\s?)(\[)([^\]]+)(\])/g;
 const ALL_HEADINGS_REGEX = /^[ \t]*#{1,6}([ \t].*|$)/gm;
 const H1_REGEX = /^[ \t]*#{1}([ \t].*|$)/gm;
 const H2_REGEX = /^[ \t]*#{2}([ \t].*|$)/gm;
@@ -249,10 +249,11 @@ export class Decorator {
     let match;
 
     while ((match = REFERENCE_URI_REGEX.exec(documentText))) {
-      // Groups: [0] = full match, [1] = '[', [2] = link text, [3] = ']', [4] = '[', [5] = ref id, [6] = ']'
+      // Groups: [0] = full match, [1] = '[', [2] = link text, [3] = ']', [4] = space (optional), [5] = '[', [6] = ref id, [7] = ']'
       const openBracket = match[1] || '';
       const linkText = match[2] || '';
       const closeBracket = match[3] || '';
+      const existingSpace = match[4] || '';
 
       const linkTextStart = match.index + openBracket.length;
       const linkTextEnd = linkTextStart + linkText.length;
