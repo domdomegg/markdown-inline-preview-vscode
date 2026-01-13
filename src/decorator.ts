@@ -284,6 +284,7 @@ export class Decorator {
           { range: closeLinkBracketRange, parent, type: this.hideDecorationType },
         );
         decorations.push({ range: linkTextRange, parent, type: this.URIDecorationType });
+        decorations.push({ range: refPartRange, parent, type: this.defaultColorDecorationType });
         if (!existingSpace) {
           decorations.push({ range: linkTextRange, parent, type: this.spaceAfterDecorationType });
         }
