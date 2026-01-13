@@ -20,7 +20,7 @@ const STRIKETHROUGH_REGEX = /(?<!~)(~{2})((?=[^\s~]).*?[^\s~])(~{2})(?!~)/g;
 const INLINE_CODE_REGEX = /(`)((?=[^\s`]).*?[^\s`])(`)/g;
 const BLOCK_CODE_REGEX = /((`{3}|~{3})\w*\n)(.*\n)*?(\2\n)/g;
 const SIMPLE_URI_REGEX = /(<)([a-z][a-z0-9+.-]*:[^\s<>]+)(>)/gi;
-const ALIASED_URI_REGEX = /(\[)([^\]]+)(\]\()([^\s)]+)(\))/g;
+const ALIASED_URI_REGEX = /(\[)([^\]]+)(\]\()([a-z][a-z0-9+.-]*:[^\s)]+)(\))/gi;
 const REFERENCE_URI_REGEX = /(\[)([^\]]+)(\])(\[)([^\]]+)(\])/g;
 const ALL_HEADINGS_REGEX = /^[ \t]*#{1,6}([ \t].*|$)/gm;
 const H1_REGEX = /^[ \t]*#{1}([ \t].*|$)/gm;
