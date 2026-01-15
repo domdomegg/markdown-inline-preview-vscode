@@ -14,7 +14,7 @@ export function HideDecorationType() {
 
 export function DefaultColorDecorationType() {
   return window.createTextEditorDecorationType({
-    color: new ThemeColor('foreground'),
+    color: new ThemeColor('editor.foreground'),
   });
 }
 
@@ -33,5 +33,30 @@ export function XlTextDecorationType() {
 export function LTextDecorationType() {
   return window.createTextEditorDecorationType({
     textDecoration: 'none; font-size: 110%;',
+  });
+}
+
+export function URIDecorationType() {
+  return window.createTextEditorDecorationType({
+    textDecoration: 'none; border-bottom: 1px solid currentColor',
+    color: new ThemeColor('editor.foreground'),
+    cursor: 'pointer',
+  });
+}
+
+export function SpaceAfterDecorationType() {
+  return window.createTextEditorDecorationType({
+    after: {
+      contentText: ' ',
+    },
+  });
+}
+
+export function HorizontalLineDecorationType() {
+  return window.createTextEditorDecorationType({
+    textDecoration: 'none; display: none;',
+    after: {
+      contentText: '_'.repeat(60),
+    },
   });
 }
