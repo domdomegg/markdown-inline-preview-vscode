@@ -1,29 +1,31 @@
 import * as vscode from 'vscode';
 
-export interface LinkData {
-  range: vscode.Range;
-  target: string;
-}
+export type LinkData = {
+	range: vscode.Range;
+	target: string;
+};
 
 export class MarkdownDocumentLinkProvider implements vscode.DocumentLinkProvider {
-  links: LinkData[] = [];
+	readonly onDidChangeDocumentLinks: vscode.Event<void>;
 
-  private _onDidChangeDocumentLinks = new vscode.EventEmitter<void>();
+	links: LinkData[] = [];
 
-  // eslint-disable-next-line no-underscore-dangle
-  readonly onDidChangeDocumentLinks = this._onDidChangeDocumentLinks.event;
+	private readonly _onDidChangeDocumentLinks = new vscode.EventEmitter<void>();
 
-  provideDocumentLinks(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    document: vscode.TextDocument,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    token: vscode.CancellationToken,
-  ): vscode.ProviderResult<vscode.DocumentLink[]> {
-    return this.links.map((data) => new vscode.DocumentLink(data.range, vscode.Uri.parse(data.target)));
-  }
+	constructor() {
+		this.onDidChangeDocumentLinks = this._onDidChangeDocumentLinks.event;
+	}
 
-  triggerUpdate() {
-    // eslint-disable-next-line no-underscore-dangle
-    this._onDidChangeDocumentLinks.fire();
-  }
+	provideDocumentLinks(
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		document: vscode.TextDocument,
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		token: vscode.CancellationToken,
+	): vscode.ProviderResult<vscode.DocumentLink[]> {
+		return this.links.map((data) => new vscode.DocumentLink(data.range, vscode.Uri.parse(data.target)));
+	}
+
+	triggerUpdate() {
+		this._onDidChangeDocumentLinks.fire();
+	}
 }
