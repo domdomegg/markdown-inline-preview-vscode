@@ -12,7 +12,7 @@
     "url": "https://github.com/domdomegg/markdown-inline-preview-vscode.git"
   },
   "engines": {
-    "vscode": "^1.88.0"
+    "vscode": "^1.96.0"
   },
   "categories": [
     "Programming Languages",
@@ -87,33 +87,25 @@
   },
   "scripts": {
     "test": "echo 'Run tests using the `Run and Debug` preset in VS Code instead.'",
-    "lint": "eslint --ext .js,.jsx,.ts,.tsx .",
+    "lint": "eslint .",
     "clean": "rm -rf dist",
+    "watch": "tsc --project tsconfig.build.json --watch",
     "build": "tsc --project tsconfig.build.json && vsce package --out dist/extension.vsix",
     "deploy:prod": "npm run clean && npm run build && vsce publish --packagePath dist/extension.vsix --pat $AZURE_DEVOPS_TOKEN && ovsx publish dist/extension.vsix --pat $OPEN_VSX_TOKEN"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "^20.1.3",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^20.12.5",
-    "@types/vscode": "^1.88.0",
-    "@vscode/test-electron": "^2.3.9",
-    "@vscode/vsce": "^2.24.0",
-    "eslint": "^8.57.0",
-    "eslint-config-domdomegg": "^1.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.17.50",
+    "@types/vscode": "^1.96.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.7.1",
+    "eslint": "^9.28.0",
+    "eslint-config-domdomegg": "^2.0.9",
     "glob": "^11.1.0",
     "mocha": "^10.8.2",
-    "ovsx": "^0.9.0",
+    "ovsx": "^0.10.9",
     "tsconfig-domdomegg": "^1.0.0",
-    "typescript": "^5.4.4"
-  },
-  "eslintConfig": {
-    "extends": [
-      "eslint-config-domdomegg"
-    ],
-    "rules": {
-      "no-cond-assign": "off",
-      "no-continue": "off"
-    }
+    "typescript": "^5.9.3"
   }
 }
