@@ -29,6 +29,13 @@ const H3_REGEX = /^[ \t]*#{3}([ \t].*|$)/gm;
 const HORIZONTAL_LINE_REGEX = /(?:\r?\n)[ \t]*(?:\r?\n)([ \t]*)(-{3,}|\*{3,}|_{3,})([ \t]*)(?=(?:\r?\n)[ \t]*(?:\r?\n))/g;
 
 export class Decorator {
+	/**
+	 * Checks if a range overlaps with any code block or inline code range.
+	 */
+	static isInsideCodeBlock(range: Range, codeBlockRanges: Range[]): boolean {
+		return codeBlockRanges.some((codeRange) => codeRange.contains(range));
+	}
+
 	activeEditor: TextEditor | undefined;
 
 	linkProvider: MarkdownDocumentLinkProvider | undefined;
@@ -74,7 +81,12 @@ export class Decorator {
 		const documentText = this.activeEditor.document.getText();
 		const config = workspace.getConfiguration('markdownInlinePreview');
 
+		// Compute code block ranges so we can exclude decorations inside them
+		const codeBlockRanges = this.getCodeBlockRanges(documentText);
+
 		// Collect all decorations and link data
+		// Code decorations (inlineCode, blockCode) are exempt from code block filtering
+		const codeDecorations: Decoration[] = [];
 		const allDecorations: Decoration[] = [];
 		const allLinks: LinkData[] = [];
 
@@ -91,11 +103,11 @@ export class Decorator {
 		}
 
 		if (config.get<boolean>('inlineCode', true)) {
-			allDecorations.push(...this.inlineCode(documentText));
+			codeDecorations.push(...this.inlineCode(documentText));
 		}
 
 		if (config.get<boolean>('blockCode', true)) {
-			allDecorations.push(...this.blockCode(documentText));
+			codeDecorations.push(...this.blockCode(documentText));
 		}
 
 		if (config.get<boolean>('simpleURI', true)) {
@@ -123,9 +135,11 @@ export class Decorator {
 			allLinks.push(...referenceURIResult.linkData);
 		}
 
-		// Apply decorations, skipping those in selected lines
+		// Apply decorations, skipping those in selected lines or inside code blocks
 		const decorationMap = new Map<TextEditorDecorationType, Range[]>();
-		allDecorations.forEach((decoration) => {
+
+		// Code decorations are only filtered by selection, not by code block containment
+		codeDecorations.forEach((decoration) => {
 			if (!this.isLineOfRangeSelected(decoration.parent)) {
 				const existing = decorationMap.get(decoration.type) || [];
 				existing.push(decoration.range);
@@ -133,8 +147,17 @@ export class Decorator {
 			}
 		});
 
+		// All other decorations are also filtered by code block containment
+		allDecorations.forEach((decoration) => {
+			if (!this.isLineOfRangeSelected(decoration.parent) && !Decorator.isInsideCodeBlock(decoration.parent, codeBlockRanges)) {
+				const existing = decorationMap.get(decoration.type) || [];
+				existing.push(decoration.range);
+				decorationMap.set(decoration.type, existing);
+			}
+		});
+
 		if (this.linkProvider) {
-			const filteredLinks = allLinks.filter((link) => !this.isLineOfRangeSelected(link.range));
+			const filteredLinks = allLinks.filter((link) => !this.isLineOfRangeSelected(link.range) && !Decorator.isInsideCodeBlock(link.range, codeBlockRanges));
 			this.linkProvider.links = filteredLinks;
 			this.linkProvider.triggerUpdate();
 		}
@@ -382,6 +405,27 @@ export class Decorator {
 
 	isLineOfRangeSelected(range: Range): boolean {
 		return Boolean(this.activeEditor?.selections.find((s) => !(range.end.line < s.start.line || range.start.line > s.end.line)));
+	}
+
+	/**
+	 * Returns the ranges of all fenced code blocks and inline code spans,
+	 * so other decorations can be excluded from these regions.
+	 */
+	getCodeBlockRanges(documentText: string): Range[] {
+		const ranges: Range[] = [];
+		let match;
+
+		const blockRegex = new RegExp(BLOCK_CODE_REGEX.source, BLOCK_CODE_REGEX.flags);
+		while ((match = blockRegex.exec(documentText))) {
+			ranges.push(this.range(match.index, match.index + match[0].length));
+		}
+
+		const inlineRegex = new RegExp(INLINE_CODE_REGEX.source, INLINE_CODE_REGEX.flags);
+		while ((match = inlineRegex.exec(documentText))) {
+			ranges.push(this.range(match.index, match.index + match[0].length));
+		}
+
+		return ranges;
 	}
 
 	/**

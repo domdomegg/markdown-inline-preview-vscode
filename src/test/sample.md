@@ -15,6 +15,7 @@ A sentence with `inline code` in it.
 A block of code:
 
 ```
+# this is a code comment
 def hello_world():
     print("Hello, world!")
 ```
