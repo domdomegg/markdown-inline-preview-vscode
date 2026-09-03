@@ -103,7 +103,7 @@
     "eslint": "^9.28.0",
     "eslint-config-domdomegg": "^2.0.9",
     "glob": "^11.1.0",
-    "mocha": "^10.8.2",
+    "mocha": "^12.0.0",
     "ovsx": "^0.10.9",
     "tsconfig-domdomegg": "^1.0.0",
     "typescript": "^5.9.3"
